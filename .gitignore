@@ -3,3 +3,6 @@
 
 # Dictionaries are allowed.
 !.idea/dictionaries/*.xml
+
+*.html
+*.cookie

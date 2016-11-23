@@ -1,4 +1,4 @@
 Almond Recorder
 ===============
 
-An Easy internet TV and radio recorder for iMBC.
+An Easy internet radio recorder for iMBC.
