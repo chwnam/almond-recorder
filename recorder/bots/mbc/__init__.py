@@ -1,4 +1,4 @@
-from ..connectors import RequestsConnector, UserAgents
+from recorder.connectors import RequestsConnector, UserAgents
 from .pages import LoginPage
 
 

@@ -10,3 +10,7 @@ class InvalidPageNameException(Exception):
 
 class AccessFailedException(Exception):
     pass
+
+
+class AlreadyRecording(Exception):
+    pass

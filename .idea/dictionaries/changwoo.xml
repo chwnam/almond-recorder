@@ -1,10 +1,22 @@
 <component name="ProjectDictionaryState">
   <dictionary name="changwoo">
     <words>
+      <w>ashx</w>
       <w>aspx</w>
       <w>changwoo</w>
+      <w>dumpstream</w>
+      <w>ffmpeg</w>
+      <w>ffprobe</w>
+      <w>fstat</w>
       <w>httplib</w>
+      <w>inode</w>
       <w>khtml</w>
+      <w>loglevel</w>
+      <w>mpeg</w>
+      <w>mplayer</w>
+      <w>nostat</w>
+      <w>nostats</w>
+      <w>popen</w>
       <w>pyperclip</w>
       <w>rtmp</w>
     </words>

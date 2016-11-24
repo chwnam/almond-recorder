@@ -89,8 +89,11 @@ class BasicConnector(ConnectorMixin, BaseConnector):
         super(BasicConnector, self).__init__(delay, extra_headers)
 
     def request(self, url, method='GET', params=None, data=None, headers=None):
-        headers = (headers or {}).update(self._extra_headers)
-        if method.upper == 'GET':
+
+        headers = (headers or {})
+        headers.update(self._extra_headers)
+
+        if method.upper() == 'GET':
             request = Request(
                 url=self.create_get_url(url, params),
                 headers=headers

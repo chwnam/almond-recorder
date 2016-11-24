@@ -6,7 +6,8 @@ from time import time
 from unittest.mock import MagicMock
 from urllib.parse import urlparse, parse_qsl
 
-from recorder.bots import connectors
+from recorder import connectors, urls
+from ..bots import urls
 
 
 class TestConnectorMixin(unittest.TestCase):
@@ -92,3 +93,10 @@ class TestRequestsConnector(unittest.TestCase):
             file_name = cls.cookie_file
         if exists(file_name):
             unlink(file_name)
+
+
+class TestUrls(unittest.TestCase):
+    def test_mbc_fm4u(self):
+        mbc = urls.MbcRadioUrl()
+        url = mbc.fm4u()
+        self.assertTrue(url.startswith('rtmp://'))
