@@ -1,36 +1,4 @@
 """
-FFMPEG_PATH = somewhere
-
-MPLAYER_PATH = somewhere
-
-KILL_PATH = somewhere
-
-recorder = StreamAudioRecorder(
-    mplayer_cache_size=8192,
-    work_path='somewhere',
-)
-
-result = recorder.dump_stream(url, duration=3600)
-
-class StreamAudioRecordResult():
-   work_path
-   file_size
-   duration
-   codec
-   temp_file_name
-   file_name
-
-
-metadata = MetadataPostProcess(result)
-metadata.set_metadata('key', 'value)
-metadata.set_metadata(
-    {
-        'artist': 'an-artist',
-        'album': 'an-album',
-    }
-)
-metadata.process()
-
 cleaner = DirectoryCleaner()
 cleaner.set_directory('somewhere').clean_older_than(
     seconds=
