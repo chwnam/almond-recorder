@@ -178,8 +178,8 @@ class DirectoryCleaner(object):
         """
         self.filter()
         if exclude_mtime:
-            return self.target
-        return [x[0] for x in self.target]
+            return [x[0] for x in self.target]
+        return self.target
 
     def clean(self):
         """

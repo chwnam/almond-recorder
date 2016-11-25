@@ -31,15 +31,16 @@ class FFMpegMetadata(object):
     title = ''
 
     def __init__(self, **kwargs):
-        self.album = kwargs.get('album', '')
-        self.album_artist = kwargs.get('album_artist', '')
-        self.author = kwargs.get('author', '')
-        self.copyright = kwargs.get('copyright', '')
-        self.description = kwargs.get('description', '')
-        self.genre = kwargs.get('genre', '')
-        self.keywords = kwargs.get('keywords', '')
-        self.rating = kwargs.get('rating', '')
-        self.title = kwargs.get('title', '')
+        tags = kwargs.get('tags', {})
+        self.album = tags.get('album', '')
+        self.album_artist = tags.get('album_artist', '')
+        self.author = tags.get('author', '')
+        self.copyright = tags.get('copyright', '')
+        self.description = tags.get('description', '')
+        self.genre = tags.get('genre', '')
+        self.keywords = tags.get('keywords', '')
+        self.rating = tags.get('rating', '')
+        self.title = tags.get('title', '')
 
     def items(self):
         return self.__dict__.items()

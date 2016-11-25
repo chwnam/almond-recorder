@@ -1,4 +1,5 @@
 from subprocess import Popen, PIPE, TimeoutExpired
+from sys import stdout
 from time import sleep
 
 from .metadata import FFProbeResult, FFMpegMetadata
@@ -13,9 +14,10 @@ MPLAYER_CACHE_SIZE = 8192
 
 
 class PopenBasedBackend(object):
+
     def __init__(self, **kwargs):
         self.timeout = kwargs.pop('timeout', None)
-
+        self.encoding = kwargs.pop('encoding', stdout.encoding)
         self.stdout_str = ''
         self.stderr_str = ''
         self.return_val = None
@@ -42,7 +44,7 @@ class PopenBasedBackend(object):
     def terminate(self):
         if self.is_working:
             self.process.terminate()
-            self.communicate(timeout=1)
+            return self.communicate(timeout=1)
 
     def stop(self):
         if self.is_working:
@@ -55,9 +57,13 @@ class PopenBasedBackend(object):
             self.process.kill()
             self.stdout_str, self.stderr_str = self.process.communicate()
         finally:
+            if self.stdout_str:
+                self.stdout_str = self.stdout_str.decode(self.encoding)
+            if self.stderr_str:
+                self.stderr_str = self.stderr_str.decode(self.encoding)
             self.return_val = self.process.returncode
             self.process = None
-        return self.return_val
+            return self.return_val
 
 
 class MPlayer(PopenBasedBackend):
@@ -128,4 +134,4 @@ class FFMpeg(PopenBasedBackend):
             output_path
         ]
 
-        self.start(command).communicate()
+        return self.start(command).communicate()

@@ -14,6 +14,7 @@
       <w>loglevel</w>
       <w>mpeg</w>
       <w>mplayer</w>
+      <w>mtime</w>
       <w>nostat</w>
       <w>nostats</w>
       <w>popen</w>
