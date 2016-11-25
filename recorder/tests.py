@@ -1,18 +1,50 @@
-from datetime import datetime, timedelta
-from http.client import HTTPMessage
-from operator import itemgetter
-from os import listdir, stat, unlink
-from os.path import abspath, exists, isfile
-from re import compile as re_compile
-from time import time
-from unittest import TestCase
-from unittest.mock import MagicMock, patch
-from urllib.parse import urlparse, parse_qsl
+from datetime import (
+    datetime,
+    timedelta,
+)
 
-from .utils import DirectoryCleaner
-from . import backends
-from . import connectors
-from . import metadata
+from http.client import HTTPMessage
+
+from operator import itemgetter
+
+from os import (
+    listdir,
+    stat,
+    unlink,
+)
+
+from os.path import (
+    abspath,
+    exists,
+    isfile,
+)
+
+from re import compile as re_compile
+
+from time import (
+    sleep,
+    time,
+)
+
+from unittest import TestCase
+
+from unittest.mock import (
+    MagicMock,
+    patch,
+)
+
+from urllib.parse import (
+    urlparse,
+    parse_qsl
+)
+
+from . import (
+    backends,
+    connectors,
+    metadata,
+    urls,
+    utils,
+)
 
 
 class TestBackends(TestCase):
@@ -24,7 +56,7 @@ class TestBackends(TestCase):
         from os.path import dirname, join
 
         self.project_path = dirname(dirname(__file__))
-        self.resource_path = join(self.project_path, 'tests', 'resources', 'sample.mp3')
+        self.resource_path = join(self.project_path, 'recorder', 'resources', 'sample.mp3')
 
     def test_mplayer(self):
         """
@@ -81,7 +113,7 @@ class TestDirectoryCleaner(TestCase):
     now = datetime.utcnow().timestamp()
 
     def setUp(self):
-        self.dc = DirectoryCleaner()
+        self.dc = utils.DirectoryCleaner()
 
         # Mocking _grab_files() method
         self.patch = patch('recorder.utils.DirectoryCleaner._grab_files')
@@ -286,8 +318,26 @@ class TestRequestsConnector(TestCase):
 
 
 class TestUrls(TestCase):
+
+    def setUp(self):
+        self.test_mbc_available = utils.check_connection(
+            urlparse(urls.MbcRadioUrl.url_base).netloc
+        )
+
     def test_mbc_fm4u(self):
-        from .urls import MbcRadioUrl
-        mbc = MbcRadioUrl()
-        url = mbc.fm4u()
-        self.assertTrue(url.startswith('rtmp://'))
+
+        if self.test_mbc_available:
+
+            mbc = urls.MbcRadioUrl()
+
+            url = mbc.fm4u()
+            self.assertTrue(url.startswith('rtmp://'))
+            sleep(3)
+
+            url = mbc.sfm()
+            self.assertTrue(url.startswith('rtmp://'))
+            sleep(3)
+
+            url = mbc.chm()
+            self.assertTrue(url.startswith('rtmp://'))
+            sleep(3)

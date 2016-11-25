@@ -1,5 +1,10 @@
 from json import loads as json_loads
-from re import compile as re_compile, MULTILINE, DOTALL
+
+from re import (
+    compile as re_compile,
+    MULTILINE,
+    DOTALL
+)
 
 from recorder.connectors import BasicConnector
 
@@ -13,13 +18,13 @@ class MbcRadioUrl(object):
     def __init__(self):
         self.connector = BasicConnector()
 
-    def standard_fm(self):
+    def sfm(self):
         return self._request('sfm')
 
     def fm4u(self):
         return self._request('mfm')
 
-    def channel_m(self):
+    def chm(self):
         return self._request('chm')
 
     def _request(self, channel):

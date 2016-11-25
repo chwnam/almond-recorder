@@ -20,6 +20,11 @@ from os.path import (
 
 from operator import itemgetter
 
+from socket import (
+    create_connection,
+    gethostbyname,
+)
+
 
 class DirectoryCleaner(object):
 
@@ -288,3 +293,18 @@ class DirectoryCleaner(object):
                     mtime = stat(path).st_mtime
                     target.append((path, mtime))
         return target
+
+
+def check_connection(remote_server=None, timeout=2):
+    if not remote_server:
+        remote_server = 'www.google.com'
+
+    # noinspection PyBroadException
+    try:
+        host = gethostbyname(remote_server)
+        conn = create_connection((host, 80), timeout=timeout)
+        conn.close()
+    except:
+        return False
+
+    return True

@@ -1,3 +1,4 @@
+from os.path import expanduser
 from recorder import urls
 from recorder import (
     AudioStreamRecorder,
@@ -11,7 +12,6 @@ def record_mbc_fm4u(duration: int, output_path: str, work_path: str):
     url = urls.MbcRadioUrl().fm4u()
 
     recorder = AudioStreamRecorder(work_path=work_path)
-
     record_file = recorder.record(url=url, duration=duration)
 
     metadata = FFMpegMetadata()
@@ -29,7 +29,7 @@ def record_mbc_fm4u_test():
 
     duration = 10
     output_path = 'out.m4a'
-    work_path = '/home/changwoo'
+    work_path = expanduser('~')
 
     record_mbc_fm4u(duration=duration, output_path=output_path, work_path=work_path)
 
