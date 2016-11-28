@@ -1,4 +1,4 @@
-from subprocess import Popen, PIPE, TimeoutExpired
+from subprocess import Popen, PIPE, TimeoutExpired, STDOUT, DEVNULL
 from sys import stdout
 from time import sleep
 
@@ -16,7 +16,11 @@ MPLAYER_CACHE_SIZE = 8192
 class PopenBasedBackend(object):
 
     def __init__(self, **kwargs):
-        self.timeout = kwargs.pop('timeout', None)
+        """
+        Keywords
+        --------
+         - timeout: timeout value when com()
+        """
         self.encoding = kwargs.pop('encoding', stdout.encoding)
         self.stdout_str = ''
         self.stderr_str = ''
@@ -36,19 +40,15 @@ class PopenBasedBackend(object):
         if self.is_working:
             return self.process.pid
 
-    def start(self, command):
+    def start(self, command, _stdin=PIPE, _stdout=PIPE, _stderr=PIPE):
         if self.is_stopped:
-            self.process = Popen(command, stdin=PIPE, stdout=PIPE)
+            self.process = Popen(command, stdin=_stdin, stdout=_stdout, stderr=_stderr)
         return self
 
-    def terminate(self):
+    def stop(self, timeout=2):
         if self.is_working:
             self.process.terminate()
-            return self.communicate(timeout=1)
-
-    def stop(self):
-        if self.is_working:
-            return self.communicate(self.timeout)
+            return self.communicate(timeout=timeout)
 
     def communicate(self, timeout=None):
         try:
@@ -68,15 +68,18 @@ class PopenBasedBackend(object):
 
 class MPlayer(PopenBasedBackend):
     def __init__(self, **kwargs):
+        """
+        :param kwargs:
+        """
         super(MPlayer, self).__init__(**kwargs)
-        self.mplayer = kwargs.pop('mplayer', MPLAYER_PATH)
-        self.cache_size = kwargs.pop('cache_size', MPLAYER_CACHE_SIZE)
+        self.mplayer = kwargs.pop('mplayer_path', MPLAYER_PATH)
+        self.cache_size = kwargs.pop('mplayer_cache_size', MPLAYER_CACHE_SIZE)
 
     @property
     def is_recording(self):
         return self.is_working
 
-    def record(self, source_path, dump_file):
+    def record(self, source_path: str, dump_file: str):
         command = [
             self.mplayer,
             source_path,
@@ -86,10 +89,12 @@ class MPlayer(PopenBasedBackend):
             '-quiet',
             '-really-quiet'
         ]
-        return self.start(command)
+
+        return self.start(command, _stdout=DEVNULL, _stderr=STDOUT)
 
     def wait(self, duration):
-        sleep(duration)
+        if duration:
+            sleep(duration)
         return self
 
 
@@ -118,7 +123,15 @@ class FFMpeg(PopenBasedBackend):
         super(FFMpeg, self).__init__(**kwargs)
         self.ffmpeg = kwargs.pop('ffmpeg_path', FFMPEG_PATH)
 
-    def insert_metadata(self, input_path: str, metadata: FFMpegMetadata, output_path: str):
+    def insert_metadata(self, input_path: str, metadata, output_path: str):
+
+        if isinstance(metadata, dict):
+            mo = FFMpegMetadata(**metadata)
+        elif isinstance(metadata, FFMpegMetadata):
+            mo = metadata
+        else:
+            mo = {}
+
         command = [
             self.ffmpeg,
             '-hide_banner',
@@ -126,9 +139,11 @@ class FFMpeg(PopenBasedBackend):
             '-loglevel', 'panic',
             '-i', input_path
         ]
-        for key, val in metadata.items():
+
+        for key, val in mo.items():
             if val:
                 command += ['-metadata', ('%s=%s' % (key, val))]
+
         command += [
             '-codec', 'copy',
             output_path

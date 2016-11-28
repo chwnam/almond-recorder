@@ -330,7 +330,7 @@ class TestUrls(TestCase):
 
             mbc = urls.MbcRadioUrl()
 
-            url = mbc.fm4u()
+            url = mbc.mfm()
             self.assertTrue(url.startswith('rtmp://'))
             sleep(3)
 

@@ -14,3 +14,7 @@ class AccessFailedException(Exception):
 
 class AlreadyRecording(Exception):
     pass
+
+
+class InvalidChannelException(Exception):
+    pass

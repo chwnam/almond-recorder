@@ -20,6 +20,7 @@
       <w>popen</w>
       <w>pyperclip</w>
       <w>rtmp</w>
+      <w>stdin</w>
     </words>
   </dictionary>
 </component>

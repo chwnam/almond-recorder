@@ -15,13 +15,15 @@ class MbcRadioUrl(object):
 
     url_base = 'http://miniplay.imbc.com/WebLiveURL.ashx?channel={}&protocol=RTMP'
 
+    channels = ('mfm', 'sfm', 'chm')
+
     def __init__(self):
         self.connector = BasicConnector()
 
     def sfm(self):
         return self._request('sfm')
 
-    def fm4u(self):
+    def mfm(self):
         return self._request('mfm')
 
     def chm(self):
