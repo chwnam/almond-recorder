@@ -38,7 +38,7 @@ class ConnectorMixin(object):
         return url + ('' if not params else '?' + urlencode(params))
 
     @staticmethod
-    def detect_charset(headers, content, fallback_encoding='utf-8'):
+    def detect_charset(headers, content, fallback_charset='utf-8'):
 
         if isinstance(headers, HTTPMessage):
             # response is made via urllib
@@ -59,7 +59,7 @@ class ConnectorMixin(object):
             # <meta http-equiv="Content-Type" content="text/html; charset=...."> found
             return meta_equiv_found.group(2).decode('ascii')
 
-        return fallback_encoding
+        return fallback_charset
 
 
 class BaseConnector(object):
@@ -85,8 +85,9 @@ class BaseConnector(object):
 
 class BasicConnector(ConnectorMixin, BaseConnector):
 
-    def __init__(self, delay=0, extra_headers=None):
+    def __init__(self, delay=0, extra_headers=None, fallback_charset='utf-8'):
         super(BasicConnector, self).__init__(delay, extra_headers)
+        self.fallback_charset = fallback_charset
 
     def request(self, url, method='GET', params=None, data=None, headers=None):
 
@@ -110,9 +111,23 @@ class BasicConnector(ConnectorMixin, BaseConnector):
         raw_content = response.read()
         response.close()
 
-        charset = self.detect_charset(headers=response.headers, content=raw_content)
+        charset = self.detect_charset(
+            headers=response.headers,
+            content=raw_content,
+            fallback_charset=self.fallback_charset
+        )
 
-        return raw_content.decode(charset)
+        if isinstance(charset, str):
+            return raw_content.decode(charset)
+
+        elif isinstance(charset, list):
+            for c in charset:
+                try:
+                    return raw_content.decode(c)
+                except UnicodeDecodeError:
+                    pass
+
+        raise UnicodeDecodeError()
 
 
 class SimpleCookieConnector(ConnectorMixin, BaseConnector):
