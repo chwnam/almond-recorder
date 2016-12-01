@@ -10,3 +10,6 @@
 *.m4a
 *.mp3
 !recorder/resources/*.mp3
+
+# program table CSV file
+imbc_table.csv

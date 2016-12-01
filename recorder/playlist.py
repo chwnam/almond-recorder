@@ -13,7 +13,7 @@ from .connectors import BasicConnector
 
 class RadioProgramItem(object):
     id = None
-    start_hour = ''
+    start_time = ''
     show_title = ''
 
 
@@ -73,7 +73,7 @@ class MBCRadioProgramTable(object):
                 item = MBCRadioProgramItem()
                 item.id = int(cols[0])
                 item.channel = cols[2]
-                item.start_hour = cols[3]
+                item.start_time = cols[3]
                 item.show_title = cols[4]
                 item.homepage_slug = cols[5]
                 item.playlist_slug = cols[6]
@@ -103,8 +103,8 @@ class MBCRadioProgramTable(object):
 class MBCRadioPlaylistCrawler(object):
     date_expr = re_compile(r'^\d{4}-\d{2}-\d{2}$')
 
-    def __init__(self):
-        self.program_table = MBCRadioProgramTable()
+    def __init__(self, **kwargs):
+        self.program_table = MBCRadioProgramTable(**kwargs)
         self.connector = BasicConnector(fallback_charset=['euc-kr', 'utf-8', ])
 
     def get_playlist(self, program_id, program_date=None):
@@ -169,18 +169,26 @@ class MBCRadioPlaylistViewParser(object):
         try:
             all_trs = soup.find('table', class_='list_tb').tbody.find_all('tr')
             for tr in all_trs:
-                if 'colspan' in tr:
-                    continue
-                tds = tr.find_all('td')
-                if len(tds) >= 5:
-                    seq = tds[1].text.strip()
+                one_col = tr.th or tr.td
+                if 'colspan' in one_col.attrs:
                     playlist.append(
                         {
-                            'seq': int(seq) if seq.isnumeric() else seq,
-                            'title': tds[2].text.strip(),
-                            'artist': tds[3].text.strip(),
+                            'seq': None,
+                            'title': one_col.text.strip(),
+                            'artist': None,
                         }
                     )
+                else:
+                    tds = tr.find_all('td')
+                    if len(tds) >= 5:
+                        seq = tds[1].text.strip()
+                        playlist.append(
+                            {
+                                'seq': int(seq) if seq.isnumeric() else seq,
+                                'title': tds[2].text.strip(),
+                                'artist': tds[3].text.strip(),
+                            }
+                        )
         except AttributeError:
             pass
         except KeyError:
