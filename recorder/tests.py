@@ -8,6 +8,7 @@ from http.client import HTTPMessage
 from operator import itemgetter
 
 from os import (
+    getcwd,
     listdir,
     stat,
     unlink,
@@ -17,6 +18,7 @@ from os.path import (
     abspath,
     exists,
     isfile,
+    join,
 )
 
 from re import compile as re_compile
@@ -42,6 +44,7 @@ from . import (
     backends,
     connectors,
     metadata,
+    playlist,
     urls,
     utils,
 )
@@ -341,3 +344,43 @@ class TestUrls(TestCase):
             url = mbc.chm()
             self.assertTrue(url.startswith('rtmp://'))
             sleep(3)
+
+
+class TestPlaylist(TestCase):
+
+    def setUp(self):
+        self.table_path = join(abspath(getcwd()), 'test_table.csv')
+
+    def test_mbc_radio_program_table(self):
+
+        if exists(self.table_path):
+            unlink(self.table_path)
+
+        table = playlist.MBCRadioProgramTable(table_path=self.table_path)
+
+        self.assertEqual(self.table_path, table.table_path)
+        self.assertTrue(exists(table.table_path))
+        self.assertTrue(table.version > 0)
+        self.assertTrue(len(table.programs) > 0)
+
+        unlink(self.table_path)
+
+    def test_mbc_radio_playlist_crawler(self):
+        table = playlist.MBCRadioProgramTable(table_path=self.table_path)
+        programs = list(filter(lambda x: x.playlist_slug, table.programs))
+
+        if programs:
+            program = programs[0]
+            crawler = playlist.MBCRadioPlaylistCrawler()
+            yesterday = (datetime.today() - timedelta(days=1)).strftime('%Y-%m-%d')
+            view_url = crawler.get_view_url(program, yesterday)
+            self.assertTrue(view_url.startswith('http') and len(view_url) > 0)
+
+            program_playlist = crawler.extract_playlist(view_url)
+            if len(program_playlist) > 0:
+                first_item = program_playlist[0]
+                self.assertTrue('seq' in first_item)
+                self.assertTrue('title' in first_item)
+                self.assertTrue('artist' in first_item)
+
+        unlink(self.table_path)
