@@ -1,5 +1,19 @@
 from argparse import ArgumentParser
+from hashlib import md5
+from os import (
+    rename,
+    stat,
+    unlink,
+)
+
+from os.path import (
+    exists as path_exists,
+    splitext,
+)
+
 from sys import stdout, stderr
+from time import time
+from random import random
 
 from recorder.playlist import MBCRadioPlaylistCrawler
 from recorder.backends import FFMpeg
@@ -36,7 +50,7 @@ class MBCPlaylist(object):
 
     def insert_playlist(self, program_id, program_date, input_path, output_path):
         playlist = self.crawler.get_playlist(program_id, program_date)
-        self.ffmpeg.insert_metadata(
+        return self.ffmpeg.insert_metadata(
             input_path=input_path,
             output_path=output_path,
             metadata={
@@ -63,6 +77,7 @@ class MBCPlaylistScript(object):
     def parse(self):
         self.parser.add_argument('-i', '--input')
         self.parser.add_argument('-o', '--output')
+        self.parser.add_argument('-r', '--replace', action='store_true', default=False)
         self.parser.add_argument('-p', '--program-id', type=int)
         self.parser.add_argument('-d', '--playlist-date')
         self.parser.add_argument('-t', '--table-path', default=None)
@@ -105,8 +120,8 @@ class MBCPlaylistScript(object):
             else:
                 if not self._check_program_id(args, stderr):
                     return
-                elif not args.output:
-                    print('--output parameter is missing', file=stderr)
+                elif not args.replace and not args.output:
+                    print('--replace is not set. --output parameter is required', file=stderr)
                     return
                 elif not args.program_id:
                     print('--program-id parameter is missing', file=stderr)
@@ -114,7 +129,19 @@ class MBCPlaylistScript(object):
                 elif not self._check_playlist_date(args, playlist, stderr):
                     return
 
-                playlist.insert_playlist(args.program_id, args.playlist_date, args.input, args.output)
+                if args.replace:
+                    output_path = self._get_temp_output_path(args.input)
+                    return_val = playlist.insert_playlist(args.program_id, args.playlist_date, args.input, output_path)
+                    if return_val == 0 and path_exists(output_path):
+                        # also deliberately check two file's size.
+                        # output file should be equal or greater than input
+                        input_stat = stat(args.input)
+                        output_stat = stat(output_path)
+                        if output_stat.st_size >= input_stat.st_size:
+                            unlink(args.input)
+                            rename(output_path, args.input)
+                else:
+                    playlist.insert_playlist(args.program_id, args.playlist_date, args.input, args.output)
 
     @staticmethod
     def _check_program_id(args, file):
@@ -130,10 +157,18 @@ class MBCPlaylistScript(object):
                 '--playlist-date parameter is missing or invalid. Format like \'%s\'' % (
                     '-'.join(['y' * 4, 'm' * 2, 'd' * 2])
                 ),
-                file=stderr
+                file=file
             )
             return False
         return True
+
+    @staticmethod
+    def _get_temp_output_path(input_path):
+        split = splitext(input_path)
+        random_text = str(time()) + str(random())
+        m = md5()
+        m.update(random_text.encode('utf-8'))
+        return split[0] + '_' + m.hexdigest() + split[1]
 
 if __name__ == '__main__':
     MBCPlaylistScript().run()
