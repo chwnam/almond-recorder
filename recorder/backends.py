@@ -19,7 +19,7 @@ class PopenBasedBackend(object):
         """
         Keywords
         --------
-         - timeout: timeout value when com()
+         - encoding: system text encoding. default) sys.stdout.encoding
         """
         self.encoding = kwargs.pop('encoding', stdout.encoding)
         self.stdout_str = ''
@@ -69,7 +69,10 @@ class PopenBasedBackend(object):
 class MPlayer(PopenBasedBackend):
     def __init__(self, **kwargs):
         """
-        :param kwargs:
+        Keywords
+        --------
+         - mplayer_path
+         - mplayer_cache_size
         """
         super(MPlayer, self).__init__(**kwargs)
         self.mplayer = kwargs.pop('mplayer_path', MPLAYER_PATH) or MPLAYER_PATH
@@ -100,6 +103,11 @@ class MPlayer(PopenBasedBackend):
 
 class FFProbe(PopenBasedBackend):
     def __init__(self, **kwargs):
+        """
+        Keywords
+        --------
+         - ffprobe_path
+        """
         super(FFProbe, self).__init__(**kwargs)
         self.ffprobe = kwargs.pop('ffprobe_path', FFPROBE_PATH) or FFPROBE_PATH
 
@@ -120,6 +128,11 @@ class FFProbe(PopenBasedBackend):
 
 class FFMpeg(PopenBasedBackend):
     def __init__(self, **kwargs):
+        """
+        Keywords
+        --------
+         - ffmpeg_path
+        """
         super(FFMpeg, self).__init__(**kwargs)
         self.ffmpeg = kwargs.pop('ffmpeg_path', FFMPEG_PATH) or FFMPEG_PATH
 

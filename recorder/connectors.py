@@ -22,9 +22,17 @@ charset_expr = re_compile(r'(.+)\s*;\s+charset=([^\s]+)')
 
 
 class ConnectorMixin(object):
+    """
+    Connector mixin
+    """
 
     @staticmethod
-    def create_get_url(url: str, params: dict=None):
+    def create_get_url(url: str, params: dict = None):
+        """
+        Creates a url for a GET request.
+        params argument is encoded and appended to url.
+        Query strings already existing in the url are also preserved.
+        """
         if not url:
             return ''
         if not params:
@@ -32,14 +40,17 @@ class ConnectorMixin(object):
 
         query_index = url.rfind('?')
         if query_index > -1:
-            params.update(parse_qsl(url[query_index+1:]))
+            params.update(parse_qsl(url[query_index + 1:]))
             url = url[:query_index]
 
         return url + ('' if not params else '?' + urlencode(params))
 
     @staticmethod
     def detect_charset(headers, content, fallback_charset='utf-8'):
-
+        """
+        Detect charset using headers or content text, returns fallback charset if none is found.
+         fallback_charset can be a string or a list.
+        """
         if isinstance(headers, HTTPMessage):
             # response is made via urllib
             # charset is in the Content-Type header
@@ -63,8 +74,17 @@ class ConnectorMixin(object):
 
 
 class BaseConnector(object):
+    """
+    Connector base class
+    """
 
     def __init__(self, delay=3, extra_headers=None):
+        """
+        Keywords
+        --------
+        delay: mandatory halt after each response. May be zero.
+        extra_headers: dict for additional request headers
+        """
         self._delay = delay
         self._extra_headers = extra_headers or {}
         self._last_content = ''
@@ -84,8 +104,17 @@ class BaseConnector(object):
 
 
 class BasicConnector(ConnectorMixin, BaseConnector):
+    """
+    BasicConnector is a naive connector implemented by using python urllib. Useful for simple GET/POST requests.
+    As cookie is NOT supported, you may want to use SimpleCookieConnector, or RequestsConnector
+    """
 
     def __init__(self, delay=0, extra_headers=None, fallback_charset='utf-8'):
+        """
+        Keywords
+        --------
+         - fallback_charset: a string or a list. Used when no charset hint is found.
+        """
         super(BasicConnector, self).__init__(delay, extra_headers)
         self.fallback_charset = fallback_charset
 
@@ -117,9 +146,9 @@ class BasicConnector(ConnectorMixin, BaseConnector):
             fallback_charset=self.fallback_charset
         )
 
+        # decode response content by charset
         if isinstance(charset, str):
             return raw_content.decode(charset)
-
         elif isinstance(charset, list):
             for c in charset:
                 try:
@@ -131,8 +160,12 @@ class BasicConnector(ConnectorMixin, BaseConnector):
 
 
 class SimpleCookieConnector(ConnectorMixin, BaseConnector):
-
     def __init__(self, cookie_file, delay=3, extra_headers=None):
+        """
+        Keywords
+        --------
+         - cookie_file
+        """
         super(SimpleCookieConnector, self).__init__(delay, extra_headers)
 
         self._cookie_file = cookie_file
@@ -146,6 +179,7 @@ class SimpleCookieConnector(ConnectorMixin, BaseConnector):
         self._last_content = ''
 
     def request(self, url, method='GET', params=None, data=None, headers=None):
+
         if not url:
             return ''
 
@@ -183,8 +217,16 @@ class SimpleCookieConnector(ConnectorMixin, BaseConnector):
 
 
 class RequestsConnector(BaseConnector):
+    """
+    Connector implemented with requests library, more robust and advanced.
+    """
 
     def __init__(self, cookie_file, delay=3, extra_headers=None):
+        """
+        Keywords
+        --------
+         - cookie_file
+        """
         super(RequestsConnector, self).__init__(delay, extra_headers)
 
         self._cookie_file = cookie_file
@@ -216,7 +258,7 @@ class RequestsConnector(BaseConnector):
         for item in self._cookie_jar:
             args = dict(vars(item).items())
             args['rest'] = args['_rest']
-            del(args['_rest'])
+            del (args['_rest'])
             cookie = Cookie(**args)
             lwp_jar.set_cookie(cookie)
         lwp_jar.save(file_name, **kwargs)
@@ -240,11 +282,15 @@ class RequestsConnector(BaseConnector):
 
 
 class UserAgents:
+    """
+    Sample user agent strings.
+    """
+
     @staticmethod
     def firefox():
         return 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:50.0) Gecko/20100101 Firefox/50.0'
 
     @staticmethod
     def chrome():
-        return 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) '\
+        return 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) ' + \
                'Ubuntu Chromium/53.0.2785.143 Chrome/53.0.2785.143 Safari/537.36'
