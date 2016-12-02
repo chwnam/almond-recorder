@@ -1,3 +1,5 @@
+from argparse import Namespace
+
 from datetime import (
     datetime,
     timedelta,
@@ -16,11 +18,13 @@ from os import (
 
 from os.path import (
     abspath,
+    dirname,
     exists,
     isfile,
     join,
 )
 
+from random import randint
 from re import compile as re_compile
 
 from time import (
@@ -48,6 +52,8 @@ from . import (
     urls,
     utils,
 )
+
+import mbc_playlist
 
 
 class TestBackends(TestCase):
@@ -346,10 +352,32 @@ class TestUrls(TestCase):
             sleep(3)
 
 
+def get_yesterday():
+    return (datetime.today() - timedelta(days=1)).strftime('%Y-%m-%d')
+
+
+def mbc_choose_any_program(table_path):
+    """
+    randomly select one item of MBCRadioProgramTable
+    :param table_path:
+    :return:
+    """
+    table = playlist.MBCRadioProgramTable(table_path=table_path)
+    programs = list(filter(lambda x: x.playlist_slug, table.programs))
+    random_id = randint(0, len(programs) - 1)
+
+    if programs:
+        return programs[random_id]
+
+
 class TestPlaylist(TestCase):
 
     def setUp(self):
         self.table_path = join(abspath(getcwd()), 'test_table.csv')
+
+    def tearDown(self):
+        if exists(self.table_path):
+            unlink(self.table_path)
 
     def test_mbc_radio_program_table(self):
 
@@ -363,19 +391,17 @@ class TestPlaylist(TestCase):
         self.assertTrue(table.version > 0)
         self.assertTrue(len(table.programs) > 0)
 
-        unlink(self.table_path)
-
     def test_mbc_radio_playlist_crawler(self):
-        table = playlist.MBCRadioProgramTable(table_path=self.table_path)
-        programs = list(filter(lambda x: x.playlist_slug, table.programs))
 
-        if programs:
-            program = programs[0]
+        program = mbc_choose_any_program(self.table_path)
+        if program:
+            # check view url validity
             crawler = playlist.MBCRadioPlaylistCrawler()
-            yesterday = (datetime.today() - timedelta(days=1)).strftime('%Y-%m-%d')
+            yesterday = get_yesterday()
             view_url = crawler.get_view_url(program, yesterday)
             self.assertTrue(view_url.startswith('http') and len(view_url) > 0)
 
+            # check playlist item validity
             program_playlist = crawler.extract_playlist(view_url)
             if len(program_playlist) > 0:
                 first_item = program_playlist[0]
@@ -383,4 +409,59 @@ class TestPlaylist(TestCase):
                 self.assertTrue('title' in first_item)
                 self.assertTrue('artist' in first_item)
 
-        unlink(self.table_path)
+
+class TestMBCPlaylistScript(TestCase):
+
+    def setUp(self):
+        self.table_path = join(abspath(getcwd()), 'test_table.csv')
+
+    def tearDown(self):
+        if exists(self.table_path):
+            unlink(self.table_path)
+
+    @patch('mbc_playlist.ArgumentParser.parse_args')
+    def test_run(self, mocked_parse_args):
+        """
+        MBCPlaylistScript.run() test
+        """
+
+        # preparing mocked argument parsing
+        current_dir = dirname(__file__)
+        random_program = mbc_choose_any_program(self.table_path)
+        yesterday = get_yesterday()
+        sample_file = join(current_dir, 'resources', 'sample.mp3')
+        output_file = join(current_dir, 'resources', 'sample_tested.mp3')
+
+        expected_args = Namespace(
+            input=sample_file,
+            output=output_file,
+            playlist_date=yesterday,
+            program_id=random_program.id,
+            table_path=self.table_path,
+            ffmpeg_path=None,
+            list_programs=False,
+            update_table=False,
+            version=False,
+        )
+
+        # mocking done
+        mocked_parse_args.return_value = expected_args
+
+        mbc_playlist.MBCPlaylistScript().run()
+
+        # output should exist
+        self.assertTrue(exists(output_file))
+
+        # if ffprobe is available, also test this.
+        # metadata's description should equal to crawled text
+        if exists(backends.FFPROBE_PATH):
+            crawler = playlist.MBCRadioPlaylistCrawler()
+            pl = crawler.get_playlist(random_program.id, yesterday)
+            pl_text = mbc_playlist.MBCPlaylist.format_text(pl)
+
+            probe = backends.FFProbe()
+            md = probe.probe(output_file)
+
+            self.assertEqual(pl_text, md.metadata.description)
+
+        unlink(output_file)
