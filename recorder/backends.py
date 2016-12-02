@@ -72,8 +72,8 @@ class MPlayer(PopenBasedBackend):
         :param kwargs:
         """
         super(MPlayer, self).__init__(**kwargs)
-        self.mplayer = kwargs.pop('mplayer_path', MPLAYER_PATH)
-        self.cache_size = kwargs.pop('mplayer_cache_size', MPLAYER_CACHE_SIZE)
+        self.mplayer = kwargs.pop('mplayer_path', MPLAYER_PATH) or MPLAYER_PATH
+        self.cache_size = kwargs.pop('mplayer_cache_size', MPLAYER_CACHE_SIZE) or MPLAYER_CACHE_SIZE
 
     @property
     def is_recording(self):
@@ -101,7 +101,7 @@ class MPlayer(PopenBasedBackend):
 class FFProbe(PopenBasedBackend):
     def __init__(self, **kwargs):
         super(FFProbe, self).__init__(**kwargs)
-        self.ffprobe = kwargs.pop('ffprobe_path', FFPROBE_PATH)
+        self.ffprobe = kwargs.pop('ffprobe_path', FFPROBE_PATH) or FFPROBE_PATH
 
     def probe(self, path):
         command = [
@@ -121,7 +121,7 @@ class FFProbe(PopenBasedBackend):
 class FFMpeg(PopenBasedBackend):
     def __init__(self, **kwargs):
         super(FFMpeg, self).__init__(**kwargs)
-        self.ffmpeg = kwargs.pop('ffmpeg_path', FFMPEG_PATH)
+        self.ffmpeg = kwargs.pop('ffmpeg_path', FFMPEG_PATH) or FFMPEG_PATH
 
     def insert_metadata(self, input_path: str, metadata, output_path: str):
 
