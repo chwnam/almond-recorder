@@ -24,6 +24,7 @@ class FFMpegMetadata(object):
     album_artist = ''
     artist = ''
     copyright = ''
+    comment = ''
     description = ''
     genre = ''
     keywords = ''
@@ -44,6 +45,7 @@ class FFMpegMetadata(object):
         self.album_artist = dict_obj.get('album_artist', '')
         self.artist = dict_obj.get('artist')
         self.copyright = dict_obj.get('copyright', '')
+        self.comment = dict_obj.get('comment', '')
         self.description = dict_obj.get('description', '')
         self.genre = dict_obj.get('genre', '')
         self.keywords = dict_obj.get('keywords', '')

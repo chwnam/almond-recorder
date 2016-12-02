@@ -54,7 +54,7 @@ class MBCPlaylist(object):
             input_path=input_path,
             output_path=output_path,
             metadata={
-                'description': self.format_text(playlist)
+                'comment': self.format_text(playlist)
             }
         )
 
