@@ -26,6 +26,7 @@ from os.path import (
 
 from random import randint
 from re import compile as re_compile
+from shutil import copy as shutil_copy
 
 from time import (
     sleep,
@@ -73,7 +74,7 @@ class TestBackends(TestCase):
         """
         m = backends.MPlayer()
         # NOTE: do not call stop(), use terminate()
-        return_val = m.record(self.resource_path, 'a.m4a').wait(3).terminate()
+        return_val = m.record(self.resource_path, 'a.m4a').wait(3).stop()
 
         self.assertEqual(return_val, 0)
         self.assertTrue(exists('a.m4a'))
@@ -442,6 +443,8 @@ class TestMBCPlaylistScript(TestCase):
             list_programs=False,
             update_table=False,
             version=False,
+            print_only=False,
+            replace=False
         )
 
         # mocking done
@@ -465,3 +468,54 @@ class TestMBCPlaylistScript(TestCase):
             self.assertEqual(pl_text, md.metadata.description)
 
         unlink(output_file)
+
+    @patch('mbc_playlist.ArgumentParser.parse_args')
+    def test_run_replace(self, mocked_parse_args):
+        """
+        MBCPlaylistScript.run() test. --replace is used.
+        """
+
+        # preparing mocked argument parsing
+        current_dir = dirname(__file__)
+        random_program = mbc_choose_any_program(self.table_path)
+        yesterday = get_yesterday()
+        sample_file = join(current_dir, 'resources', 'sample.mp3')
+        input_file = join(current_dir, 'resources', 'sample_for_replace_test.mp3')
+
+        # copy file
+        shutil_copy(sample_file, input_file)
+        self.assertTrue(exists(input_file))
+        del sample_file
+
+        expected_args = Namespace(
+            input=input_file,
+            output=None,
+            playlist_date=yesterday,
+            program_id=random_program.id,
+            table_path=self.table_path,
+            ffmpeg_path=None,
+            list_programs=False,
+            update_table=False,
+            version=False,
+            print_only=False,
+            replace=True  # replace
+        )
+
+        # mocking done
+        mocked_parse_args.return_value = expected_args
+
+        mbc_playlist.MBCPlaylistScript().run()
+
+        # if ffprobe is available, also test this.
+        # metadata's description should equal to crawled text
+        if exists(backends.FFPROBE_PATH):
+            crawler = playlist.MBCRadioPlaylistCrawler()
+            pl = crawler.get_playlist(random_program.id, yesterday)
+            pl_text = mbc_playlist.MBCPlaylist.format_text(pl)
+
+            probe = backends.FFProbe()
+            md = probe.probe(input_file)
+
+            self.assertEqual(pl_text, md.metadata.description)
+
+        unlink(input_file)
