@@ -46,8 +46,7 @@ class MBCRadioProgramItem(RadioProgramItem):
 class MBCRadioProgramTable(object):
     default_imbc_table_path = path_join(abspath(getcwd()), 'imbc_table.csv')
 
-    url = 'https://gist.githubusercontent.com/chwnam' + \
-          '/29ddbf4900064f8ae9870df73f93530a/raw/5a5c2a8659b4b1a06a58b81201bbcfe6f15fddd3/imbc_table'
+    url = 'https://gist.githubusercontent.com/chwnam/29ddbf4900064f8ae9870df73f93530a/raw/imbc_table'
 
     table_path = abspath(getcwd())
 
